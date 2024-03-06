@@ -1,0 +1,52 @@
+Location,Year,Trial,Type,Design,Observations,Genotypes,,,,,,,,
+Davenport,2022,AWY1,SWW,Alpha-Lattice,126,42,,Plots,8660,,,,,
+Harrington,2022,AWY1,SWW,Alpha-Lattice,126,42,,Locations ,9,,,,,Davenport
+Prescott,2022,AWY1,SWW,Alpha-Lattice,126,42,,Years,3,,,,,Harrington
+Pullman,2022,AWY1,SWW,Alpha-Lattice,126,42,,Alpha Lattice,35,,,,,Prescott
+Ritzville,2022,AWY1,SWW,Alpha-Lattice,126,42,,Augmented,12,,,,,Pullman
+Davenport,2022,AWY2,SWW,Alpha-Lattice,108,36,,,,,,,,Ritzville
+Farmington,2022,AWY2,SWW,Alpha-Lattice,108,36,,,,,,,,Farmington
+Pullman,2022,AWY2,SWW,Alpha-Lattice,108,36,,,,,,,,Lind
+Pullman,2022,F5 SP,SWW,Augmented ,194,183,,,,,,,,Walla_Walla
+Pullman,2022,F5 SP,SWW,Augmented ,176,168,,,,,,,,Kahlotus
+Davenport,2022,Prelim,SWW,Alpha-Lattice,162,54,,,,,,,,
+Ritzville,2022,Prelim,SWW,Alpha-Lattice,162,54,,,,,,,,
+Pullman,2022,Prelim,SWW,Alpha-Lattice,180,60,,,,,,,,
+Harrington,2020,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Lind,2020,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Pullman,2020,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Ritzville,2020,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Farmington,2020,AWY2,SWW,Alpha-Lattice,144,48,,,,,,,,
+Pullman,2020,AWY2,SWW,Alpha-Lattice,144,48,,,,,,,,
+Walla_Walla,2020,AWY2,SWW,Alpha-Lattice,144,48,,,,,,,,
+Lind,2020,DH SP,SWW,Augmented ,406,375,,,,,,,,
+Lind,2020,F5 SP,SWW,Augmented ,304,281,,,,,,,,
+Lind,2020,Prelim,SWW,Alpha-Lattice,198,66,,,,,,,,
+Pullman,2020,DH SP,SWW,Augmented ,134,121,,,,,,,,
+Pullman,2020,Prelim,SWW,Alpha-Lattice,216,72,,,,,,,,
+Pullman,2020,F5 SP,SWW,Augmented ,223,208,,,,,,,,
+Pullman,2020,Prelim,SWW,Alpha-Lattice,216,72,,,,,,,,
+Walla_Walla,2020,Prelim,SWW,Alpha-Lattice,216,72,,,,,,,,
+Davenport,2021,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Harrington,2021,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Kahlotus,2021,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Lind,2021,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Pullman,2021,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Ritzville,2021,AWY1,SWW,Alpha-Lattice,144,48,,,,,,,,
+Davenport,2021,AWY2,SWW,Alpha-Lattice,144,48,,,,,,,,
+Pullman,2021,AWY2,SWW,Alpha-Lattice,144,48,,,,,,,,
+Walla_Walla,2021,AWY2,SWW,Alpha-Lattice,144,48,,,,,,,,
+Lind,2021,DH SP,SWW,Augmented ,129,113,,,,,,,,
+Lind,2021,DH SP,SWW,Augmented ,99,93,,,,,,,,
+Lind,2021,F5 SP,SWW,Augmented ,414,382,,,,,,,,
+Ritzville,2021,F5 SP,SWW,Augmented ,414,382,,,,,,,,
+Pullman,2021,DH SP,SWW,Augmented ,227,212,,,,,,,,
+Pullman,2021,F5 SP,SWW,Augmented ,468,433,,,,,,,,
+Pullman,2021,Prelim,SWW,Alpha-Lattice,216,72,,,,,,,,
+Walla_Walla,2021,Prelim,SWW,Alpha-Lattice,216,72,,,,,,,,
+Davenport,2021,Prelim,SWW,Alpha-Lattice,216,72,,,,,,,,
+Lind,2021,Prelim,SWW,Alpha-Lattice,216,72,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,,,,,,,,,,
+,,,,,8660,,,,,,,,,

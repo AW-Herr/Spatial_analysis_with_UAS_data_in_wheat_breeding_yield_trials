@@ -1,0 +1,140 @@
+```{r}
+#Packages
+library(tidyverse)
+library(lme4)
+library(optimx)
+```
+
+```{r}
+Cullis_H2=function(model){
+  library(arm)
+  
+  S_1 <- as.data.frame(VarCorr(model)) 
+  sigma2_g <- S_1[1,4]
+  
+  ses<- se.ranef(model)$'Name1:new.ind' #where 'm' is your model object from 'lmer' (replace 'genotypes' with whatever you call your individuals in the data)
+  v_BLUP<- ses^2
+  sigma2_g=VarCorr(model, comp="Variance")$'Name1:new.ind'[1]
+  Reliability<- 1- v_BLUP/ (2*sigma2_g)  #where sigma2_g is the genetic variance estimated with the model saved in 'm'
+  H2<- round(mean(Reliability),3) #This is equivalent to broad-sense heritability on the line-mean (or family-mean, if your individuals are non-inbred families) basis
+  H2
+}
+```
+
+```{r}
+#Data
+data <- read.csv("Spatial Dataset.csv")
+
+data$NDRE2 <- as.numeric(data$NDRE2)
+data$new.ind <- ifelse(data$Check>1,1,data$Check)
+data <- data %>% mutate(check.ind = recode(new.ind,"1"="0", "0"="1"))
+data$check.ind <- as.factor(data$check.ind)
+data$new.ind <- as.factor(data$new.ind)
+
+aug <- data %>% filter(Design != "Alpha-Lattice")
+alpha <- data %>% filter(Design == "Alpha-Lattice")
+```
+
+```{r}
+#Augmented
+
+#Subset Data Set
+aug.list <- unique(aug$Experiment.Name)
+
+aug.h2 <- data.frame()
+
+for (x in 1:length(aug.list)) {
+  
+  aug.sub <- aug %>% filter(Experiment.Name == aug.list[x])
+  
+  #H2 for each Trial
+  Aug_Phenotype_BUAC <- lmer(BUAC~check.ind + (1|Name1:new.ind) + IBLK,
+                       data=aug.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e3)))
+  
+  Aug_BUAC_H2 <- Cullis_H2(Aug_Phenotype_BUAC)
+  
+  Aug_Can <- lmer(Can_Cover~check.ind + (1|Name1:new.ind) + IBLK,
+                       data=aug.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e3)))
+  
+  Aug_Can_H2 <- Cullis_H2(Aug_Can)
+  
+  Aug_NDVI <- lmer(NDVI~check.ind + (1|Name1:new.ind) + IBLK,
+                       data=aug.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e3)))
+  
+  Aug_NDVI_H2 <- Cullis_H2(Aug_NDVI)
+  
+  Aug_NDRE <- lmer(NDRE2~check.ind + (1|Name1:new.ind) + IBLK,
+                       data=aug.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e3)))
+  
+  Aug_NDRE_H2 <- Cullis_H2(Aug_NDRE)
+  
+  Aug_NWI <- lmer(NWI1~check.ind + (1|Name1:new.ind) + IBLK,
+                       data=aug.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e3)))
+  
+  Aug_NWI_H2 <- Cullis_H2(Aug_NWI)
+  
+  aug.h2 <- rbind(aug.h2,list(aug.sub$Location[1],aug.sub$Year[1],aug.sub$Trial[1],aug.sub$Experiment.Name[1],aug.sub$Design[1],Aug_BUAC_H2,Aug_Can_H2,Aug_NDVI_H2,Aug_NDRE_H2,Aug_NWI_H2))
+}
+
+colnames(aug.h2) <- c("Location","Year","Trial","Experiment.Name","Design","buac_H2","can_cover_H2","ndvi_H2","ndre_H2","nwi_H2")
+
+
+```
+
+```{r}
+#Alpha
+
+#Subset Data Set
+alpha.list <- unique(alpha$Experiment.Name)
+
+alpha.h2 <- data.frame()
+
+for (x in 1:length(alpha.list)) {
+  
+  alpha.sub <- alpha %>% filter(Experiment.Name == alpha.list[x])
+  
+  #H2 for each Trial
+  alpha_Phenotype_BUAC <- lmer(BUAC ~ (1|Name1) + (1|BLOC),
+                       data=alpha.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e10)))
+  
+  alpha_BUAC_H2 <- Cullis_H2(alpha_Phenotype_BUAC)
+  
+  alpha_Can <- lmer(Can_Cover~check.ind + (1|Name1:new.ind) + (1|IBLK),
+                       data=alpha.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e10)))
+  
+  alpha_Can_H2 <- Cullis_H2(alpha_Can)
+  
+  alpha_NDVI <- lmer(NDVI~check.ind + (1|Name1:new.ind) + (1|IBLK),
+                       data=alpha.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e10)))
+  
+  alpha_NDVI_H2 <- Cullis_H2(alpha_NDVI)
+  
+  alpha_NDRE <- lmer(NDRE2~check.ind + (1|Name1:new.ind) + (1|IBLK),
+                       data=alpha.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e10)))
+  
+  alpha_NDRE_H2 <- Cullis_H2(alpha_NDRE)
+  
+  alpha_NWI <- lmer(NWI1~check.ind + (1|Name1:new.ind) + (1|IBLK),
+                       data=alpha.sub,
+                       control=lmerControl(optimizer="Nelder_Mead",optCtrl=list(maxfun=1e10)))
+  
+  alpha_NWI_H2 <- Cullis_H2(alpha_NWI)
+  
+  alpha.h2 <- rbind(alpha.h2,list(alpha.sub$Location[1],alpha.sub$Year[1],alpha.sub$Trial[1],alpha.sub$Experiment.Name[1],alpha.sub$Design[1],alpha_BUAC_H2,alpha_Can_H2,alpha_NDVI_H2,alpha_NDRE_H2,alpha_NWI_H2))
+}
+
+colnames(alpha.h2) <- c("Location","Year","Trial","Experiment.Name","Design","buac_H2","can_cover_H2","ndvi_H2","ndre_H2","nwi_H2")
+
+
+```
+
+

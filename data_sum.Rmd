@@ -1,0 +1,38 @@
+```{r}
+library(dplyr)
+data <- read.csv("19-22_Soft.csv") %>% 
+  filter(Year != 2019)
+```
+
+```{r}
+data.4 <- data.frame()
+for (x in unique(data$Year)) {
+data.1 <- data %>% 
+  filter(Year == x) %>% 
+  count(Experiment.Name,Location,Year,Trial,Type,Design)
+ 
+data.2 <- data %>% 
+  filter(Year == x) %>%
+  group_by(Experiment.Name) %>% 
+  summarise(count = n_distinct(Name1)) 
+
+data.3 <- cbind(data.1,data.2$count)
+data.4 <- rbind(data.3,data.4)
+}
+data.4 <- data.4[,-1]
+colnames(data.4) <- c("Location","Year","Trial","Type","Design","Observations","Genotypes")
+
+write.csv(data.4, "trial_sum.csv", row.names = FALSE)
+```
+
+```{r}
+data.5 <- data %>% 
+  summarise(count = n_distinct(Name1))
+```
+
+
+
+
+
+
+

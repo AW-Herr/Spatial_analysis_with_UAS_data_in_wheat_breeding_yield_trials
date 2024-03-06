@@ -1,0 +1,226 @@
+```{r}
+#Packages
+gc()
+library(tidyverse)
+library(lme4)
+library(sommer)
+library(spdep)
+```
+
+```{r}
+#Data
+data <- read.csv("Spatial Dataset.csv")
+
+data$NDRE2 <- as.numeric(data$NDRE2)
+data$new.ind <- ifelse(data$Check>1,1,data$Check)
+data <- data %>% mutate(check.ind = recode(new.ind,"1"="0", "0"="1"))
+data$check.ind <- as.factor(data$check.ind)
+data$new.ind <- as.factor(data$new.ind)
+
+data$Range <- as.numeric(as.character(data$Range))
+data$Column <- as.numeric(as.character(data$Column))
+
+data$R <- as.factor(data$Range)
+data$C <- as.factor(data$Column)
+
+data <- data %>% filter(Year != 2019)
+
+aug <- data %>% filter(Design != "Alpha-Lattice")
+alpha <- data %>% filter(Design == "Alpha-Lattice")
+
+index.list <- list("Can_Cover","NDVI","NDRE2")
+
+```
+
+```{r}
+#Augmented Trials
+
+#Subset Data Set
+aug.list <- unique(aug$Experiment.Name)
+
+aug.base <- data.frame()
+
+for (x in 1:length(aug.list)) {
+  
+  #x=1
+  
+  aug.sub <- aug %>% filter(Experiment.Name == aug.list[x])
+  
+  #Base Control
+  aug.base.mod <- mmer(BUAC ~ Check,
+                       random= ~ R + C + IBLK + Name1,
+                       rcov= ~ units,
+                       data=aug.sub, verbose = F, nIters=30, tolParInv = 10, naMethodY = "include" , naMethodX = "include")
+  
+  save(aug.base.mod, file =  paste0("models\\mod-rowcol-aug-",aug.list[x],"-control.Rdata"))
+  
+  #BLUEs ################
+  out <- aug.sub %>% mutate(control.preds = BUAC + aug.base.mod$residuals) #############################
+  
+  #Model Fit
+  aug_base_AIC <- aug.base.mod$AIC
+  aug_base_log <- summary(aug.base.mod)$logo$logLik
+  
+  #Moran's I
+  xy.rook <- cell2nb(nrow = max(aug.sub$Range), ncol = max(aug.sub$Column), type = "rook")
+
+  mi <- moran.test(aug.base.mod$residuals, nb2listw(xy.rook), na.action = na.exclude)
+  mi.stat <- mi$estimate
+  mi.stat$p.value <- mi$p.value
+  
+  #CV
+  mn <- mean(aug.sub$BUAC, na.rm = T)
+  cv <- sqrt(mean((aug.base.mod$residuals)^2))/mn *100
+  
+  
+  control <- c(aug.sub$Location[1],aug.sub$Year[1],aug.sub$Trial[1],aug.sub$Experiment.Name[1],aug.sub$Design[1],"Control",aug_base_AIC,aug_base_log,
+               mi.stat$`Moran I statistic`, mi.stat$Expectation, mi.stat$Variance, mi.stat$p.value, cv)
+  
+  base.loop <- data.frame()
+  
+  for (y in 1:length(index.list)) {
+    
+    #y=2
+    
+    i.form <- as.formula(paste("BUAC ~ Check +",index.list[[y]]))
+    
+    aug.mod <- mmer(i.form,
+                     random= ~ R + C+ IBLK + Name1,
+                     rcov= ~ units,
+                     data=aug.sub, verbose = F, nIters=30, tolParInv = 10, naMethodY = "include" , naMethodX = "include")
+    
+    save(aug.mod, file = paste0("models\\mod-rowcol-aug-",aug.list[x],"-",index.list[y],".Rdata"))
+    
+    #BLUEs
+    out <- out %>% mutate(fill = BUAC + aug.mod$residuals) ###################
+    names(out)[length(names(out))] <- paste0(index.list[[y]],".preds") #######
+  
+    #Model Fit
+    aug_AIC <- aug.mod$AIC
+    aug_log <- summary(aug.mod)$logo$logLik
+    
+    #Moran's I
+    xy.rook <- cell2nb(nrow = max(aug.sub$Range), ncol = max(aug.sub$Column), type = "rook")
+    
+    mi <- moran.test(aug.mod$residuals, nb2listw(xy.rook), na.action = na.exclude)
+    mi.stat <- mi$estimate
+    mi.stat$p.value <- mi$p.value
+    
+    #CV
+    mn <- mean(aug.sub$BUAC, na.rm = T)
+    cv <- sqrt(mean((aug.mod$residuals)^2))/mn *100
+    
+    list <- c(aug.sub$Location[1],aug.sub$Year[1],aug.sub$Trial[1],aug.sub$Experiment.Name[1],aug.sub$Design[1],index.list[[y]],aug_AIC,aug_log,
+              mi.stat$`Moran I statistic`, mi.stat$Expectation, mi.stat$Variance, mi.stat$p.value, cv)
+    
+    base.loop <- rbind(base.loop,list)
+  }
+  
+    itt <- rbind(control, base.loop)
+    colnames(itt) <- c("Location","Year","Trial","Experiment.Name","Design","Index","AIC","logLik","Moran I statistic","Expectation","Variance","p Value", "CV")
+    aug.base <- rbind(aug.base,itt)
+    colnames(aug.base) <- c("Location","Year","Trial","Experiment.Name","Design","Index","AIC","logLik","Moran I statistic","Expectation","Variance","p Value", "CV")
+    write.csv(out, file = paste0("G:\\Chapter 4\\R\\Adjustments\\rowcol ",aug.list[x],".csv")) ############
+
+}
+```
+
+```{r}
+#Alpha Trials
+#Control Base Model
+#alpha.base <- lm(BUAC ~ BLOC + IBLK + Name1, data = alpha)
+
+#Subset Data Set
+alpha.list <- unique(alpha$Experiment.Name)
+
+alpha.base <- data.frame()
+
+for (x in 1:length(alpha.list)) {
+  
+  alpha.sub <- alpha %>% filter(Experiment.Name == alpha.list[x])
+  
+  #Base Control
+  alpha.base.mod <- mmer(BUAC ~ Name1,
+                       random= ~ R + C + BLOC + IBLK,
+                       rcov= ~ units,
+                       data=alpha.sub, verbose = F, nIters=30, tolParInv = 10, naMethodY = "include", naMethodX = "include")
+  
+  save(alpha.base.mod, file = paste0("models\\mod-rowcol-alpha-",alpha.list[x],"-control.Rdata"))
+  
+  #BLUEs ################
+  out <- alpha.sub %>% mutate(control.preds = alpha.sub$BUAC + alpha.base.mod$residuals) #############################
+  
+  alpha_base_AIC <- alpha.base.mod$AIC
+  alpha_base_log <- summary(alpha.base.mod)$logo$logLik
+  
+  #Moran's I
+  xy.rook <- NULL
+  xy.rook <- cell2nb(nrow = max(alpha.sub$Range), ncol = max(alpha.sub$Column), type = "rook")
+  mi <- moran.test(alpha.base.mod$residuals, nb2listw(xy.rook), na.action = na.exclude)
+  mi.stat <- mi$estimate
+  mi.stat$p.value <- mi$p.value
+  
+  #CV
+  mn <- mean(alpha.sub$BUAC)
+  cv <- sqrt(mean((alpha.base.mod$residuals)^2))/mn *100
+  
+  control <- c(alpha.sub$Location[1],alpha.sub$Year[1],alpha.sub$Trial[1],alpha.sub$Experiment.Name[1],alpha.sub$Design[1],"Control",alpha_base_AIC,alpha_base_log,
+              mi.stat$`Moran I statistic`, mi.stat$Expectation, mi.stat$Variance, mi.stat$p.value, cv)
+  
+  
+  base.loop <- data.frame()
+  
+  for (y in 1:length(index.list)) {
+    
+    #y=2
+    
+    i.form <- as.formula(paste("BUAC ~ Name1 +",index.list[[y]]))
+    
+    alpha.mod <- mmer(i.form,
+                     random= ~ R + C + BLOC + IBLK,
+                     rcov= ~ units,
+                     data=alpha.sub, verbose = F, nIters=30, tolParInv = 10, naMethodY = "include", naMethodX = "include")
+    
+    save(alpha.mod, file = paste0("models\\mod-rowcol-alpha-",alpha.list[x],"-",index.list[[y]],".Rdata"))
+    
+    #BLUEs
+    out <- out %>% mutate(fill = alpha.sub$BUAC + alpha.mod$residuals) ###################
+    names(out)[length(names(out))] <- paste0(index.list[[y]],".preds") #######
+  
+    #Model Fit
+    alpha_AIC <- alpha.mod$AIC
+    alpha_log <- summary(alpha.mod)$logo$logLik
+    
+    #Moran's I
+    xy.rook <- NULL
+    xy.rook <- cell2nb(nrow = max(alpha.sub$Range), ncol = max(alpha.sub$Column), type = "rook")
+    mi <- moran.test(alpha.base.mod$residuals, nb2listw(xy.rook), na.action = na.exclude)
+    mi.stat <- mi$estimate
+    mi.stat$p.value <- mi$p.value
+    
+    #CV
+    mn <- mean(alpha.sub$BUAC)
+    cv <- sqrt(mean((alpha.mod$residuals)^2))/mn *100
+    
+    list <- c(alpha.sub$Location[1],alpha.sub$Year[1],alpha.sub$Trial[1],alpha.sub$Experiment.Name[1],alpha.sub$Design[1],index.list[[y]],alpha_AIC,alpha_log,
+              mi.stat$`Moran I statistic`, mi.stat$Expectation, mi.stat$Variance, mi.stat$p.value, cv)
+    
+    base.loop <- rbind(base.loop,list)
+  }
+  
+    itt <- rbind(control, base.loop)
+    colnames(itt) <- c("Location","Year","Trial","Experiment.Name","Design","Index","AIC","logLik","Moran I statistic","Expectation","Variance","p Value", "CV")
+    alpha.base <- rbind(alpha.base,itt)
+    colnames(alpha.base) <- c("Location","Year","Trial","Experiment.Name","Design","Index","AIC","logLik","Moran I statistic","Expectation","Variance","p Value", "CV")
+    write.csv(out, file = paste0("G:\\Chapter 4\\R\\Adjustments\\rowcol ",alpha.list[x],".csv")) ############
+
+}
+```
+
+
+```{r}
+output <- rbind(aug.base,alpha.base)
+
+write.csv(output, file = "Row-Col Fixed Effect Model.csv", row.names = F)
+```
+

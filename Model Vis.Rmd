@@ -1,0 +1,203 @@
+```{r}
+library(tidyverse)
+library(introdataviz)
+library(ggpubr)
+```
+
+```{r}
+base <- read.csv("Base Fixed Effect Model.csv")
+base$Model <- "Traditional Design"
+
+multivariate <- read.csv("Multivariate Model.csv")
+multivariate$Model <- "Multivariate"
+
+spline <- read.csv("Sommer Spline Model.csv")
+spline$Model <- "2D Spline"
+
+rowcol <- read.csv("Row-Col Fixed Effect Model.csv")
+rowcol$Model <- "Row-Column"
+
+data <- rbind(base,spline,rowcol)
+write.csv(data, file = "All Models.csv", row.names = F)
+```
+
+```{r}
+data <- data %>% filter(Experiment.Name != "2020 AHR2 PUL")
+
+Graph <- ggplot(data, aes(x = Model, y = logLik, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Model") + 
+            scale_y_continuous(name = "logLik") +
+            scale_fill_brewer(palette = "Dark2", name = "Trial Design") +
+            theme_minimal()
+
+ggsave(filename = "Model Graph Log.jpg", plot = Graph)
+
+Graph <- ggplot(data, aes(x = Model, y = BIC, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Model") + 
+            scale_y_continuous(name = "BIC") +
+            scale_fill_brewer(palette = "Dark2", name = "Trial Design") +
+            theme_minimal()
+
+#ggsave(filename = "Model Graph BIC.jpg", plot = Graph)
+```
+
+```{r}
+data$Index <- as.character(data$Index)
+data$Index <- factor(data$Index, levels = c("Control","Can_Cover","NDVI","NDRE2"))
+
+data1 <- data %>% filter(Model == "Traditional Design")
+Graph1 <- ggplot(data1, aes(x = Index, y = logLik, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Traditional Control","% Canopy Cover", "NDVI", "NDRE"),
+                             guide = guide_axis(n.dodge = 3)) + 
+            scale_y_continuous(name = "logLik",
+                               limits = c(-400,100)) + 
+            ggtitle("Traditional Design Analysis") +
+            scale_fill_brewer(palette = "Dark2", name = "Trial Design") +
+            theme_minimal()
+
+ggsave(filename = "Model Graph Log UniTD.jpg", plot = Graph1)
+```
+
+
+```{r}
+data1 <- data %>% filter(Model == "Multivariate")
+data2 <- data %>% filter(Model == "Traditional Design" & Index == "Control")
+data2$Index <- "Traditional Control"
+
+data1 <- rbind(data2,data1)
+data1$Index <- factor(data1$Index, levels = c("Traditional Control","Can_Cover","NDVI","NDRE2"))
+
+Graph2 <- ggplot(data1, aes(x = Index, y = logLik, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Traditional Control","% Canopy Cover", "NDVI", "NDRE"),
+                             guide = guide_axis(n.dodge = 3)) + 
+            scale_y_continuous(name = "logLik",
+                               limits = c(-400,100)) + 
+            ggtitle("Multivariate Analysis") +
+            scale_fill_brewer(palette = "Dark2", name = "Trial Design") +
+            theme_minimal()
+
+ggsave(filename = "Model Graph Log MultiTD.jpg", plot = Graph2)
+```
+
+
+```{r}
+data1 <- data %>% filter(Model == "2D Spline")
+data2 <- data %>% filter(Model == "Traditional Design" & Index == "Control")
+data2$Index <- "Traditional Control"
+
+data1 <- rbind(data2,data1)
+data1$Index <- factor(data1$Index, levels = c("Traditional Control","Control","Can_Cover","NDVI","NDRE2"))
+
+Graph3 <- ggplot(data1, aes(x = Index, y = logLik, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Traditional Control","Spline Control","% Canopy Cover", "NDVI", "NDRE"),
+                             guide = guide_axis(n.dodge = 3)) + 
+            scale_y_continuous(name = "logLik",
+                               limits = c(-400,100)) + 
+            ggtitle("2D Spline Analysis") +
+            scale_fill_brewer(palette = "Dark2", name = "Trial Design") +
+            theme_minimal()
+
+ggsave(filename = "Model Graph Log Spline.jpg", plot = Graph3)
+```
+
+
+```{r}
+data1 <- data %>% filter(Model == "Row-Column")
+data2 <- data %>% filter(Model == "Traditional Design" & Index == "Control")
+data2$Index <- "Traditional Control"
+
+data1 <- rbind(data2,data1)
+data1$Index <- factor(data1$Index, levels = c("Traditional Control","Control","Can_Cover","NDVI","NDRE2"))
+
+Graph4 <- ggplot(data1, aes(x = Index, y = logLik, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Traditional Control","Row/Col Control","% Canopy Cover", "NDVI", "NDRE"),
+                             guide = guide_axis(n.dodge = 3)) + 
+            scale_y_continuous(name = "logLik",
+                               limits = c(-400,100)) + 
+            ggtitle("Row-Column Analysis") +
+            scale_fill_brewer(palette = "Dark2", name = "Trial Design") +
+            theme_minimal()
+
+ggsave(filename = "Model Graph Log RowCol.jpg", plot = Graph4)
+```
+
+```{r}
+combo <- ggarrange(Graph1,Graph2,Graph3,Graph4,ncol = 2,nrow = 2, common.legend = T)
+
+combo
+
+ggsave(filename = "Index Effect.jpg", combo)
+```
+
+
+```{r}
+Moran.I.1 <-  ggplot(data, aes(x = Moran.I.statistic, fill = Design)) +
+                  geom_dotplot(binwidth = .026, stackgroups = T, binpositions = "all") +
+                  scale_x_continuous(name = "Moran I Statistic",
+                               limits = c(-1,1)) +
+                 scale_y_continuous(name = "frequenecy")
+                  
+
+ggsave(filename = "Moran I Design.jpg", plot = Moran.I.1, width = 7, height = 8)
+
+Moran.I.2 <- ggplot(data, aes(x = Moran.I.statistic, fill = Index)) +
+                  geom_dotplot(binwidth = .026,stackgroups = TRUE, binpositions = "all")
+
+ggsave(filename = "Moran I Index.jpg", plot = Moran.I.2, width = 7, height = 8)
+
+
+data$Year <- as.character(data$Year)
+Moran.I.3 <- ggplot(data, aes(x = Moran.I.statistic, fill = Year)) +
+                  geom_dotplot(binwidth = .028, stackgroups = T, binpositions = "all") +
+                  scale_x_continuous(name = "Moran I Statistic",
+                               limits = c(-1,1)) +
+                  scale_y_continuous(name = "frequency")
+
+ggsave(filename = "Moran I Year.jpg", plot = Moran.I.3, width = 7, height = 8)
+
+ggarrange(Moran.I.1,Moran.I.3, file = "Moran Combined.jpg")
+```
+
+
+
+

@@ -1,0 +1,174 @@
+```{r}
+rm(list = ls())
+library(dplyr)
+library(introdataviz)
+library(ggpubr)
+library(ggthemr)
+library(stringr)
+```
+
+```{r}
+base <- read.csv("Base Fixed Effect Model.csv")
+base$Model <- "Block-Effect"
+
+multivariate <- read.csv("Multivariate Model.csv")
+multivariate$Model <- "Multivariate"
+
+spline <- read.csv("Sommer Spline Model.csv")
+spline$Model <- "2D Spline"
+
+rowcol <- read.csv("Row-Col Fixed Effect Model.csv")
+rowcol$Model <- "Row-Column"
+
+data <- rbind(base,spline,rowcol)
+write.csv(data, file = "All Models.csv", row.names = F)
+
+data <- data %>% mutate(Design = str_replace_all(Design,"Augmented","ACBD"))
+```
+
+```{r}
+data <- data %>% filter(Experiment.Name != "2020 AHR2 PUL")
+
+ggthemr_reset()
+ggthemr("light")
+
+Graph <- ggplot(data, aes(x = Model, y = logLik, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Model") + 
+            scale_y_continuous(name = "logLik")
+
+#ggsave(filename = "Model Graph Log.jpg", plot = Graph)
+
+Graph <- ggplot(data, aes(x = Model, y = CV, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Model") + 
+            scale_y_continuous(name = "CV")
+
+ggsave(filename = "Model Graph CV.jpg", plot = Graph)
+```
+
+```{r}
+data$Index <- as.character(data$Index)
+data$Index <- factor(data$Index, levels = c("Control","Can_Cover","NDVI","NDRE2"))
+
+data1 <- data %>% filter(Model == "Block-Effect")
+
+Graph1 <- ggplot(data1, aes(x = Index, y = CV, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Block-Effect\nControl","%CC", "NDVI", "NDRE")) + 
+            scale_y_continuous(name = "CV",
+                               limits = c(0,40)) + 
+            ggtitle("Block-Effect") + 
+            theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggsave(filename = "Model Graph Log UniTD CV.jpg", plot = Graph1)
+```
+
+
+```{r}
+data1 <- data %>% filter(Model == "Multivariate")
+data2 <- data %>% filter(Model == "Block-Effect" & Index == "Control")
+data2$Index <- "Block-Effect Control"
+
+data1 <- rbind(data2,data1)
+data1$Index <- factor(data1$Index, levels = c("Block-Effect Control","Can_Cover","NDVI","NDRE2"))
+
+Graph2 <- ggplot(data1, aes(x = Index, y = CV, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Block-Effect\nControl","%CC", "NDVI", "NDRE")) + 
+            scale_y_continuous(name = "CV",
+                               limits = c(0,40)) + 
+            ggtitle("Multivariate") + 
+            theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggsave(filename = "Model Graph Log MultiTD CV.jpg", plot = Graph2)
+```
+
+
+```{r}
+data1 <- data %>% filter(Model == "2D Spline")
+data2 <- data %>% filter(Model == "Block-Effect" & Index == "Control")
+data2$Index <- "Block-Effect Control"
+
+data1 <- rbind(data2,data1)
+data1$Index <- factor(data1$Index, levels = c("Block-Effect Control","Control","Can_Cover","NDVI","NDRE2"))
+
+
+Graph3 <- ggplot(data1, aes(x = Index, y = CV, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Block-Effect\nControl","Spline\nControl","%CC", "NDVI", "NDRE")) + 
+            scale_y_continuous(name = "CV",
+                               limits = c(0,40)) + 
+            ggtitle("2D Spline")  + 
+            theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggsave(filename = "Model Graph Log Spline CV.jpg", plot = Graph3)
+```
+
+
+```{r}
+data1 <- data %>% filter(Model == "Row-Column")
+data2 <- data %>% filter(Model == "Block-Effect" & Index == "Control")
+data2$Index <- "Block-Effect Control"
+
+data1 <- rbind(data2,data1)
+data1$Index <- factor(data1$Index, levels = c("Block-Effect Control","Control","Can_Cover","NDVI","NDRE2"))
+
+Graph4 <- ggplot(data1, aes(x = Index, y = CV, fill = Design)) +
+            introdataviz::geom_split_violin(alpha = 0.4, trim = F) +
+            geom_boxplot(width = 0.2, alpha = 0.6, fatten = NULL, show.legend = F) +
+            stat_summary(fun.data = "mean_se",
+                         geom = "pointrange",
+                         show.legend = F,
+                         position = position_dodge(0.175)) +
+            scale_x_discrete(name = "Index", 
+                             labels = c("Block-Effect\nControl","Row/Col\nControl","%CC", "NDVI", "NDRE")) + 
+            scale_y_continuous(name = "CV",
+                               limits = c(0,40)) + 
+            ggtitle("Row-Column") + 
+            theme(axis.text.x = element_text(angle = 60, hjust = 1))
+
+ggsave(filename = "Model Graph Log RowCol CV.jpg", plot = Graph4)
+```
+
+```{r}
+combo <- ggarrange(Graph1,Graph4,Graph3,ncol = 3,nrow = 1, common.legend = T, legend = "top") %>%  annotate_figure(top = text_grob("Variability of Adjusted Trials with SRI Covarietes (CV)", color = "black", face = "bold", size = 18))
+                   #labels = c("A","B","C","D"))
+#combo <- annotate_figure(combo, top = text_grob("CV from Spatial Analysis with UAS Data",
+                                                #face = "bold", size = 22))
+
+combo
+
+ggsave(filename = "Index Effect CV.jpg", combo, height = 5, width = 7.5 )
+```
+
+
+
